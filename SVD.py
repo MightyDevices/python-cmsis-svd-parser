@@ -3,7 +3,6 @@ import re
 import copy
 import random
 import string
-from typing import List, Tuple
 
 
 # class for parsing SVD files
