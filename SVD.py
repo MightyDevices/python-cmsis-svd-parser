@@ -922,6 +922,3 @@ class SVD:
 
         # return the processed device
         return root
-
-
-SVD.process(ET.parse('test_all.svd').getroot())
