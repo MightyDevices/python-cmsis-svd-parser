@@ -30,5 +30,7 @@ root = ET.parse('example.svd').getroot()
 device = SVD.process(root)
 ```
 
-Please see the Examples directory for demonstration.
+## Example
+Please see the Examples directory for a quick demonstration. Run the example by 
+typing: `python ListPeriphRegs.py` in the Examples directory
 

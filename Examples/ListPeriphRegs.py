@@ -1,10 +1,14 @@
 # In this example we are about to list all registers of all peripherals after
 # being processed by the main hero of this story
 
-import xml.etree.ElementTree as ET
+# add the top directory where the module itself sits
+import site
+site.addsitedir("..")
 
+# import the parser
+import xml.etree.ElementTree as ET
 # import the svd parser itself
-from SVD.SVD import SVD
+from SVD import SVD
 
 
 # display information about the registers fields and whatnot
