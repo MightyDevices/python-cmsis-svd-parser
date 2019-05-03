@@ -3,6 +3,7 @@ import re
 import copy
 import random
 import string
+from typing import List, Tuple
 
 
 # class for parsing SVD files
@@ -33,7 +34,7 @@ class SVD:
 
     # converts integer
     @staticmethod
-    def _convert_integer(x):
+    def _convert_integer(x: str):
         # try to perform the conversion
         try:
             value = int(x, 0)
@@ -45,7 +46,7 @@ class SVD:
 
     # converts boolean value
     @staticmethod
-    def _convert_boolean(x):
+    def _convert_boolean(x :str):
         # try to perform the conversion
         try:
             # word true provide
@@ -65,7 +66,7 @@ class SVD:
 
     # converts string to non-negative integer
     @staticmethod
-    def _convert_scaled_non_negative_integer(x):
+    def _convert_scaled_non_negative_integer(x: str):
         # try to convert
         try:
             # determine integer base yourself!
@@ -81,7 +82,7 @@ class SVD:
 
     # converts enumeratedValueDataType
     @staticmethod
-    def _convert_enumerated_value_data_type(x):
+    def _convert_enumerated_value_data_type(x: str):
         # allowable patterns
         patterns = [
             ("hex", "(0x|0X)[0-9a-fA-F]+"),
@@ -114,7 +115,7 @@ class SVD:
     # convert dim index type to an iterable that represents strings to be
     # substituted in the name placeholders
     @staticmethod
-    def _convert_dim_index_type(x):
+    def _convert_dim_index_type(x: str):
         # try to match against start-end syntax with numerals
         sen = re.match("(?P<start>[0-9]+|[A-Z]+)-(?P<end>[0-9]+|[A-Z]+)", x)
         # got a match?
@@ -152,7 +153,7 @@ class SVD:
 
     # converter for identifiers compatible with ANSI C
     @staticmethod
-    def _convert_identifier_type(x):
+    def _convert_identifier_type(x: str):
         # check name
         if not re.match("[_A-Za-z]+\w*", x):
             raise Exception(f"Unable to convert identifierType {x}")
@@ -176,7 +177,7 @@ class SVD:
 
     # converter for bit range types
     @staticmethod
-    def _convert_bit_range_type(x):
+    def _convert_bit_range_type(x: str):
         # try to match
         m = re.match("\[((?:[0-6])?[0-9]):((?:[0-6])?[0-9])\]", x)
         if not m:
@@ -186,7 +187,7 @@ class SVD:
 
     # converter cpu type
     @staticmethod
-    def _convert_cpu_name_type(x):
+    def _convert_cpu_name_type(x: str):
         # allowed types
         types = [
             "CM0", "CM0PLUS", "CM0+", "CM1", "SC000", "CM23", "CM3",
@@ -202,7 +203,7 @@ class SVD:
 
     # converter for cpu revision
     @staticmethod
-    def _convert_revision_type(x):
+    def _convert_revision_type(x: str):
         # match against revision regexp
         if not re.match("r[0-9]*p[0-9]*", x):
             raise Exception(f"Invalid CPU revision {x}")
@@ -211,7 +212,7 @@ class SVD:
 
     # converter for endiannes
     @staticmethod
-    def _convert_endian_type(x):
+    def _convert_endian_type(x: str):
         # allowed types
         types = ["little", "big", "selectable", "other"]
         # check if type belongs to set
@@ -225,7 +226,8 @@ class SVD:
     # convert the xml text (which is always a string, obviously) to whatever
     # you prefer
     @staticmethod
-    def _get_val(node, name, default=None, convert=None, required=True):
+    def _get_val(node: ET.Element, name: str, default=None, convert=None,
+                 required=True):
         # look for node
         rf = node.find(name)
         # no node
@@ -251,7 +253,7 @@ class SVD:
     # convertedusing the conversion logic. convertsions is a list of tuples
     # in format: (dict_name, svd_name, required, default, converter)
     @staticmethod
-    def _get_vals(node, conversions):
+    def _get_vals(node: ET.Element, conversions: list):
         # start with empty dictionary
         d = dict()
         # process all conversions
@@ -267,7 +269,7 @@ class SVD:
 
     # process cpu record
     @staticmethod
-    def _process_cpu(node):
+    def _process_cpu(node: ET.Element):
         # all the conversions
         conversions = [
             ('name', 'name', True, None, SVD._convert_cpu_name_type),
@@ -285,7 +287,7 @@ class SVD:
 
     # process register property group
     @staticmethod
-    def _process_register_properties_group(node):
+    def _process_register_properties_group(node: ET.Element):
         # all the conversions
         conversions = [
             ('size', 'size', False, None,
@@ -300,7 +302,7 @@ class SVD:
 
     # process dimensional element group
     @staticmethod
-    def _process_dim_element_group(node):
+    def _process_dim_element_group(node: ET.Element):
         # all the conversions
         conversions = [
             ('dim', 'dim', False, None,
@@ -315,7 +317,7 @@ class SVD:
 
     # process bit range
     @staticmethod
-    def _process_bit_range(node):
+    def _process_bit_range(node: ET.Element):
         # all the conversions
         conversions = [
             ('offset', 'bitOffset', False, None,
@@ -334,7 +336,7 @@ class SVD:
 
     # resolve processed bit-range to offset-width notation
     @staticmethod
-    def _resolve_bit_range(bit_range):
+    def _resolve_bit_range(bit_range: dict):
         # simplest case, offset and width already given
         if bit_range.get('offset') is not None:
             bit_offset = bit_range.get('offset')
@@ -354,7 +356,7 @@ class SVD:
 
     # process address block
     @staticmethod
-    def _process_address_block(node):
+    def _process_address_block(node: ET.Element):
         # all the conversions
         conversions = [
             ('offset', 'offset', True, None,
@@ -367,7 +369,7 @@ class SVD:
         return SVD._get_vals(node, conversions)
 
     @staticmethod
-    def _process_interrupt(node):
+    def _process_interrupt(node: ET.Element):
         # all the conversions
         conversions = [
             ('name', 'name', True, None, None),
@@ -381,7 +383,7 @@ class SVD:
 
     # process enumerated value
     @staticmethod
-    def _process_enumerated_value(node):
+    def _process_enumerated_value(node: ET.Element):
         # all the conversions
         conversions = [
             ('name', 'name', False, None, None),
@@ -402,7 +404,7 @@ class SVD:
 
     # process enumerated values
     @staticmethod
-    def _process_enumerated_values(node):
+    def _process_enumerated_values(node: ET.Element):
         # all the conversions
         conversions = [
             ('name', 'name', False, None, None),
@@ -433,7 +435,7 @@ class SVD:
 
     # process fields that belong to registers
     @staticmethod
-    def _process_field(node):
+    def _process_field(node: ET.Element):
         # all the conversions
         conversions = [
             ('name', 'name', True, None, SVD._covnert_dimable_identifier_type),
@@ -468,7 +470,7 @@ class SVD:
 
     # process register information
     @staticmethod
-    def _process_register(node):
+    def _process_register(node: ET.Element):
         # all the conversions
         conversions = [
             ('name', 'name', True, None, SVD._covnert_dimable_identifier_type),
@@ -505,7 +507,7 @@ class SVD:
     # clusters express hierarchical structures of registers (and make my life
     # miserable due to recursive programming which I hate).
     @staticmethod
-    def _process_cluster(node):
+    def _process_cluster(node: ET.Element):
         # all the conversions
         conversions = [
             ('name', 'name', True, None, SVD._covnert_dimable_identifier_type),
@@ -549,7 +551,7 @@ class SVD:
 
     # process single peripheral, return derivation path as well
     @staticmethod
-    def _process_peripheral(node):
+    def _process_peripheral(node: ET.Element):
         # all the conversions
         conversions = [
             ('name', 'name', True, None, SVD._covnert_dimable_identifier_type),
@@ -604,14 +606,14 @@ class SVD:
                 # go down the cluster tree
                 c_name, c_data = SVD._process_register(n)
                 # store information
-                peripheral['clusters'][c_name] = c_data
+                peripheral['registers'][c_name] = c_data
 
         # return read value
         return peripheral.get('name'), peripheral
 
     # process the device entry
     @staticmethod
-    def _process_device(node):
+    def _process_device(node: ET.Element):
         # all the conversions
         conversions = [
             ('name', 'name', True, None, None),
@@ -630,7 +632,7 @@ class SVD:
         device['fully_defined'] = True
         # process all peripherals
         for n in node.find('peripherals') or []:
-            # proces peripheral data
+            # process peripheral data
             p_name, p_data = SVD._process_peripheral(n)
             # store within the device
             device['peripherals'][p_name] = p_data
@@ -661,7 +663,7 @@ class SVD:
 
     # function walks the derivation path and returns the matching entry
     @staticmethod
-    def _follow_derivation_path(path, level_collections):
+    def _follow_derivation_path(path: str, level_collections: list):
         # split path using periods
         path_elems = path.split(".")
         # if path is more parts that we have level collections then there is
@@ -741,7 +743,7 @@ class SVD:
 
     # generate element instances based on the 'derivedFrom' property
     @staticmethod
-    def _resolve_derivations(node, name=None, level_name='device',
+    def _resolve_derivations(node: dict, name=None, level_name='device',
                              levels_collections=None):
         # initialize list that represent the levels that we reach as we go
         # down the hierarchy
@@ -794,7 +796,7 @@ class SVD:
     # deals with 'registerPropertiesGroup' but you can add more in the
     # 'initial conditions'
     @staticmethod
-    def _resolve_implicit_inheritance(node, inheritance=None):
+    def _resolve_implicit_inheritance(node: dict, inheritance=None):
         # initial conditions
         if inheritance is None:
             inheritance = {k: dict() for k in ['reg_properties']}
@@ -819,7 +821,7 @@ class SVD:
     # create an iterable that represents all strings that shall be generated
     # based on provided 'dimElementGroup' data
     @staticmethod
-    def _create_arrays_lists_namespace(node):
+    def _create_arrays_lists_namespace(node: dict):
         # extract information
         name, dim = node.get('name'), node.get('dim')
         # two modes of operation
@@ -908,9 +910,10 @@ class SVD:
     # cycles or other funny-business). That, my dear friend should help you in
     # cases such as generating your own *.h files for MCU projects.
     @staticmethod
-    def process(root):
-        # parse both informations
+    def process(root: ET.Element):
+        # build up the device dictionary as defined in the svd file
         device = SVD._process_device(root)
+
         # resolve all derivations so that we end up with fully expanded
         # list of peripherals/registers/etc...
         SVD._resolve_derivations(device)
@@ -921,4 +924,4 @@ class SVD:
         SVD._resolve_arrays_lists(device)
 
         # return the processed device
-        return root
+        return device
