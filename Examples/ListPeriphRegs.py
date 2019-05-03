@@ -7,6 +7,14 @@ import xml.etree.ElementTree as ET
 from SVD.SVD import SVD
 
 
+# display information about the registers fields and whatnot
+def display_fields(register: dict, level=0):
+    # parse all fields
+    for field in register['fields']:
+        # show field name
+        print("\t" * level + f"Field Name: {field}")
+
+
 # do a recursive browsing of the cluster/register tree
 def display_registers(collection: dict, level=0):
     # got a cluster situation?
@@ -23,6 +31,8 @@ def display_registers(collection: dict, level=0):
         for register in collection['registers']:
             # show it's name
             print("\t" * level + f"Register Name: {register}")
+            # go down!
+            display_fields(collection['registers'][register], level + 1)
 
 
 # load the file using xml parser
