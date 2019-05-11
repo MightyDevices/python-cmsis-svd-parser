@@ -934,18 +934,22 @@ class SVDReader:
     # cycles or other funny-business). That, my dear friend should help you in
     # cases such as generating your own *.h files for MCU projects.
     @staticmethod
-    def process(root: ET.Element):
+    def process(root: ET.Element, resolve_derivations=True,
+                resolve_inheritance=True, resolve_arrays_lists=True):
         # build up the device dictionary as defined in the svd file
         device = SVDReader._process_device(root)
 
         # resolve all derivations so that we end up with fully expanded
         # list of peripherals/registers/etc...
-        SVDReader._resolve_derivations(device)
+        if resolve_derivations:
+            SVDReader._resolve_derivations(device)
         # resolve the inheritance within the device tree according
         # to svd rules
-        SVDReader._resolve_implicit_inheritance(device)
+        if resolve_inheritance:
+            SVDReader._resolve_implicit_inheritance(device)
         # # create lists and arrays!
-        SVDReader._resolve_arrays_lists(device)
+        if resolve_arrays_lists:
+            SVDReader._resolve_arrays_lists(device)
 
         # return the processed device
         return device

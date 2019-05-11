@@ -126,29 +126,40 @@ class SVDWriter:
     def _populate_enumerated_values(enumerated_values: dict):
         # create a root
         xml_enumerated_values = ET.Element('enumeratedValues')
+        # got the derivation set-up?
+        if not enumerated_values.get('fully_defined'):
+            xml_enumerated_values.set('derivedFrom',
+                                      enumerated_values['derived_from'])
         # build up the basic information
         SVDWriter._build_tree(xml_enumerated_values,
                               enumerated_values, {'name': None})
         # process all fields within register
-        for _, ev in enumerated_values['enumerated_value'].items():
-            xml_enumerated_values.append(
-                SVDWriter._populate_enumerated_value(ev))
+        if enumerated_values.get('enumerated_value'):
+            for _, ev in enumerated_values['enumerated_value'].items():
+                xml_enumerated_values.append(
+                    SVDWriter._populate_enumerated_value(ev))
         # return the generated tree
         return xml_enumerated_values
 
     # prepare a sub-tree containing information about a single field
     @staticmethod
     def _populate_field(field: dict):
+        # root element for the register
+        xml_field = ET.Element('field')
+        # got the derivation set-up?
+        if not field.get('fully_defined'):
+            xml_field.set('derivedFrom', field['derived_from'])
         # prepare basic information
-        xml_field = SVDWriter._build_tree(ET.Element('field'), field, {
+        SVDWriter._build_tree(xml_field, field, {
             'name': None,
             'description': None,
             'bit_offset': 'bitOffset',
             'bit_width': 'bitWidth',
         })
         # multiple enumerated values are supported
-        for _, evs in field['enumerated_values'].items():
-            xml_field.append(SVDWriter._populate_enumerated_values(evs))
+        if field.get('enumerated_values'):
+            for _, evs in field['enumerated_values'].items():
+                xml_field.append(SVDWriter._populate_enumerated_values(evs))
         # return the tree
         return xml_field
 
@@ -168,8 +179,11 @@ class SVDWriter:
     def _populate_register(register: dict):
         # root element for the register
         xml_register = ET.Element('register')
+        # got the derivation set-up?
+        if not register.get('fully_defined'):
+            xml_register.set('derivedFrom', register['derived_from'])
         # populate dim information
-        if register['dim']:
+        if register.get('dim'):
             SVDWriter._append_dim_element_group(xml_register, register['dim'])
         # prepare basic information
         SVDWriter._build_tree(xml_register, register, {
@@ -178,11 +192,11 @@ class SVDWriter:
             'offset': ('addressOffset', SVDWriter._convert_hex)
         })
         # populate registers properties information
-        if register['reg_properties']:
+        if register.get('reg_properties'):
             SVDWriter._append_register_properties_group(
                 xml_register, register['reg_properties'])
         # store register fields
-        if register['fields']:
+        if register.get('fields'):
             xml_register.append(SVDWriter._populate_fields(register))
         # return the xml representing the register
         return xml_register
@@ -192,8 +206,11 @@ class SVDWriter:
     def _populate_cluster(cluster: dict):
         # prepare root for the cluster
         xml_cluster = ET.Element('cluster')
+        # got the derivation set-up?
+        if not cluster.get('fully_defined'):
+            xml_cluster.set('derivedFrom', cluster['derived_from'])
         # populate dim information
-        if cluster['dim']:
+        if cluster.get('dim'):
             SVDWriter._append_dim_element_group(xml_cluster, cluster['dim'])
         # prepare basic information
         SVDWriter._build_tree(xml_cluster, cluster, {
@@ -206,11 +223,13 @@ class SVDWriter:
             SVDWriter._append_register_properties_group(
                 xml_cluster, cluster['reg_properties'])
         # support for nested clusters
-        for _, c in cluster['clusters'].items():
-            xml_cluster.append(SVDWriter._populate_cluster(c))
+        if cluster.get('clusters'):
+            for _, c in cluster['clusters'].items():
+                xml_cluster.append(SVDWriter._populate_cluster(c))
         # prepare register information
-        for _, r in cluster['registers'].items():
-            xml_cluster.append(SVDWriter._populate_register(r))
+        if cluster.get('registers'):
+            for _, r in cluster['registers'].items():
+                xml_cluster.append(SVDWriter._populate_register(r))
         # return gathered information
         return xml_cluster
 
@@ -220,11 +239,13 @@ class SVDWriter:
         # registers root element
         xml_registers = ET.Element('registers')
         # process every cluster
-        for _, c in peripheral['clusters'].items():
-            xml_registers.append(SVDWriter._populate_cluster(c))
+        if peripheral.get('clusters'):
+            for _, c in peripheral['clusters'].items():
+                xml_registers.append(SVDWriter._populate_cluster(c))
         # process every peripheral
-        for _, r in peripheral['registers'].items():
-            xml_registers.append(SVDWriter._populate_register(r))
+        if peripheral.get('registers'):
+            for _, r in peripheral['registers'].items():
+                xml_registers.append(SVDWriter._populate_register(r))
         # return peripherals
         return xml_registers
 
@@ -242,8 +263,11 @@ class SVDWriter:
     def _populate_peripheral(peripheral: dict):
         # root peripheral element
         xml_peripheral = ET.Element('peripheral')
+        # got the derivation set-up?
+        if not peripheral.get('fully_defined'):
+            xml_peripheral.set('derivedFrom', peripheral['derived_from'])
         # populate dim information
-        if peripheral['dim']:
+        if peripheral.get('dim'):
             SVDWriter._append_dim_element_group(xml_peripheral,
                                                 peripheral['dim'])
         # populate basic information
@@ -254,14 +278,16 @@ class SVDWriter:
             'base_address': ('baseAddress', SVDWriter._convert_hex)
         })
         # populate registers properties information
-        if peripheral['reg_properties']:
+        if peripheral.get('reg_properties'):
             SVDWriter._append_register_properties_group(
                 xml_peripheral, peripheral['reg_properties'])
         # store interrupt information
-        for _, i in peripheral['interrupts'].items():
-            xml_peripheral.append(SVDWriter._populate_interrupt(i))
+        if peripheral.get('interrupts'):
+            for _, i in peripheral['interrupts'].items():
+                xml_peripheral.append(SVDWriter._populate_interrupt(i))
         # populate registers information
-        xml_peripheral.append(SVDWriter._populate_registers(peripheral))
+        if peripheral.get('registers'):
+            xml_peripheral.append(SVDWriter._populate_registers(peripheral))
         # return the populated peripheral
         return xml_peripheral
 
