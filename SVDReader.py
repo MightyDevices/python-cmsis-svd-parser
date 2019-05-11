@@ -6,7 +6,7 @@ import string
 
 
 # class for parsing SVD files
-class SVD:
+class SVDReader:
     # levels of hierarchy in the system
     _hierarchy = ('device', 'peripherals',
                   'clusters', 'registers', 'fields',
@@ -20,7 +20,7 @@ class SVD:
     # returns a list of next level hierarchy names that follow given node
     @staticmethod
     def _next_level_name(node: dict):
-        return [h for h in SVD._hierarchy if h in node]
+        return [h for h in SVDReader._hierarchy if h in node]
 
     # get to the next hierarchy level and return the list of tuples in format:
     # (level_name, level_collection). A list is returned because
@@ -29,7 +29,7 @@ class SVD:
     @staticmethod
     def _next_level(node: dict):
         return [(h_name, node.get(h_name))
-                for h_name in SVD._next_level_name(node)]
+                for h_name in SVDReader._next_level_name(node)]
 
     # converts integer
     @staticmethod
@@ -45,7 +45,7 @@ class SVD:
 
     # converts boolean value
     @staticmethod
-    def _convert_boolean(x :str):
+    def _convert_boolean(x: str):
         # try to perform the conversion
         try:
             # word true provide
@@ -257,7 +257,8 @@ class SVD:
         d = dict()
         # process all conversions
         for dict_name, svd_name, req, default, converter in conversions:
-            d[dict_name] = SVD._get_val(node, svd_name, default, converter, req)
+            d[dict_name] = SVDReader._get_val(node, svd_name, default,
+                                              converter, req)
         # return entries that are not empty
         return {k: v for k, v in d.items() if v is not None}
 
@@ -271,18 +272,21 @@ class SVD:
     def _process_cpu(node: ET.Element):
         # all the conversions
         conversions = [
-            ('name', 'name', True, None, SVD._convert_cpu_name_type),
-            ('revision', 'revision', True, None, SVD._convert_revision_type),
-            ('endian', 'endian', True, None, SVD._convert_endian_type),
-            ('mpu_present', 'mpuPresent', True, None, SVD._convert_boolean),
-            ('fpu_present', 'fpuPresent', True, None, SVD._convert_boolean),
+            ('name', 'name', True, None, SVDReader._convert_cpu_name_type),
+            ('revision', 'revision', True, None,
+             SVDReader._convert_revision_type),
+            ('endian', 'endian', True, None, SVDReader._convert_endian_type),
+            ('mpu_present', 'mpuPresent', True, None,
+             SVDReader._convert_boolean),
+            ('fpu_present', 'fpuPresent', True, None,
+             SVDReader._convert_boolean),
             ('nvic_priority_bits', 'nvicPrioBits', True, None,
-             SVD._convert_integer),
+             SVDReader._convert_integer),
             ('vendor_systick', 'vendorSystickConfig', True, None,
-             SVD._convert_boolean),
+             SVDReader._convert_boolean),
         ]
         # return read values
-        return SVD._get_vals(node, conversions)
+        return SVDReader._get_vals(node, conversions)
 
     # process register property group
     @staticmethod
@@ -290,14 +294,14 @@ class SVD:
         # all the conversions
         conversions = [
             ('size', 'size', False, None,
-             SVD._convert_scaled_non_negative_integer),
+             SVDReader._convert_scaled_non_negative_integer),
             ('reset_value', 'resetValue', False, None,
-             SVD._convert_scaled_non_negative_integer),
+             SVDReader._convert_scaled_non_negative_integer),
             ('reset_mask', 'resetMask', False, None,
-             SVD._convert_scaled_non_negative_integer)
+             SVDReader._convert_scaled_non_negative_integer)
         ]
         # return read value
-        return SVD._get_vals(node, conversions)
+        return SVDReader._get_vals(node, conversions)
 
     # process dimensional element group
     @staticmethod
@@ -305,14 +309,16 @@ class SVD:
         # all the conversions
         conversions = [
             ('dim', 'dim', False, None,
-             SVD._convert_scaled_non_negative_integer),
+             SVDReader._convert_scaled_non_negative_integer),
             ('increment', 'dimIncrement', False, None,
-             SVD._convert_scaled_non_negative_integer),
-            ('index', 'dimIndex', False, None, SVD._convert_dim_index_type),
-            ('name', 'dimName', False, None, SVD._convert_identifier_type)
+             SVDReader._convert_scaled_non_negative_integer),
+            ('index', 'dimIndex', False, None,
+             SVDReader._convert_dim_index_type),
+            ('name', 'dimName', False, None,
+             SVDReader._convert_identifier_type)
         ]
         # return read value
-        return SVD._get_vals(node, conversions)
+        return SVDReader._get_vals(node, conversions)
 
     # process bit range
     @staticmethod
@@ -320,18 +326,18 @@ class SVD:
         # all the conversions
         conversions = [
             ('offset', 'bitOffset', False, None,
-             SVD._convert_scaled_non_negative_integer),
+             SVDReader._convert_scaled_non_negative_integer),
             ('width', 'bitWidth', False, None,
-             SVD._convert_scaled_non_negative_integer),
+             SVDReader._convert_scaled_non_negative_integer),
             ('lsb', 'lsb', False, None,
-             SVD._convert_scaled_non_negative_integer),
+             SVDReader._convert_scaled_non_negative_integer),
             ('msb', 'msb', False, None,
-             SVD._convert_scaled_non_negative_integer),
+             SVDReader._convert_scaled_non_negative_integer),
             ('range', 'bitRange', False, None,
-             SVD._convert_bit_range_type),
+             SVDReader._convert_bit_range_type),
         ]
         # return read value
-        return SVD._get_vals(node, conversions)
+        return SVDReader._get_vals(node, conversions)
 
     # resolve processed bit-range to offset-width notation
     @staticmethod
@@ -359,13 +365,13 @@ class SVD:
         # all the conversions
         conversions = [
             ('offset', 'offset', True, None,
-             SVD._convert_scaled_non_negative_integer),
+             SVDReader._convert_scaled_non_negative_integer),
             ('size', 'size', True, None,
-             SVD._convert_scaled_non_negative_integer),
+             SVDReader._convert_scaled_non_negative_integer),
             ('usage', 'usage', False, None, None),
         ]
         # return read value
-        return SVD._get_vals(node, conversions)
+        return SVDReader._get_vals(node, conversions)
 
     @staticmethod
     def _process_interrupt(node: ET.Element):
@@ -373,10 +379,10 @@ class SVD:
         conversions = [
             ('name', 'name', True, None, None),
             ('description', 'description', False, None, None),
-            ('value', 'value', True, None, SVD._convert_integer),
+            ('value', 'value', True, None, SVDReader._convert_integer),
         ]
         # do the conversions
-        int_val = SVD._get_vals(node, conversions)
+        int_val = SVDReader._get_vals(node, conversions)
         # return read value
         return int_val.get('name'), int_val
 
@@ -388,19 +394,19 @@ class SVD:
             ('name', 'name', False, None, None),
             ('description', 'description', False, None, None),
             ('header_name', 'headerEnumName', False, None,
-             SVD._convert_identifier_type),
+             SVDReader._convert_identifier_type),
             ('value', 'value', False, None,
-             SVD._convert_enumerated_value_data_type),
+             SVDReader._convert_enumerated_value_data_type),
             ('is_default', 'isDefault', False, None,
-             SVD._convert_boolean)
+             SVDReader._convert_boolean)
         ]
         # get basic information
-        enum_val = SVD._get_vals(node, conversions)
+        enum_val = SVDReader._get_vals(node, conversions)
         # these are always fully-defined
         enum_val['fully_defined'] = True
         # return name (which may be randomly generated if none is provided)
         # and read value
-        return enum_val.get('name', SVD._random_string()), enum_val
+        return enum_val.get('name', SVDReader._random_string()), enum_val
 
     # process enumerated values
     @staticmethod
@@ -409,11 +415,11 @@ class SVD:
         conversions = [
             ('name', 'name', False, None, None),
             ('header_name', 'headerEnumName', False, None,
-             SVD._convert_identifier_type),
+             SVDReader._convert_identifier_type),
             ('description', 'description', False, None, None)
         ]
         # get basic information
-        enums = SVD._get_vals(node, conversions)
+        enums = SVDReader._get_vals(node, conversions)
         # derived field?
         if 'derivedFrom' in node.attrib:
             enums['derived_from'] = node.attrib['derivedFrom']
@@ -426,30 +432,32 @@ class SVD:
         # at the same level as 'node' itself
         for n in node.iter('enumeratedValue') or []:
             # process peripheral data
-            ev_name, ev_data = SVD._process_enumerated_value(n)
+            ev_name, ev_data = SVDReader._process_enumerated_value(n)
             # store within the device
             enums['enumerated_value'][ev_name] = ev_data
         # return name (which may be randomly generated if none is provided)
         # and read value
-        return enums.get('name', SVD._random_string()), enums
+        return enums.get('name', SVDReader._random_string()), enums
 
     # process fields that belong to registers
     @staticmethod
     def _process_field(node: ET.Element):
         # all the conversions
         conversions = [
-            ('name', 'name', True, None, SVD._covnert_dimable_identifier_type),
+            ('name', 'name', True, None,
+             SVDReader._covnert_dimable_identifier_type),
             ('description', 'description', False, None, None)
         ]
         # get basic information
-        field = SVD._get_vals(node, conversions)
+        field = SVDReader._get_vals(node, conversions)
         # registers property group may also be present
-        field['reg_properties'] = SVD._process_register_properties_group(node)
+        field['reg_properties'] = \
+            SVDReader._process_register_properties_group(node)
         # dimensional element group might be present
-        field['dim'] = SVD._process_dim_element_group(node)
+        field['dim'] = SVDReader._process_dim_element_group(node)
         # resolve the notation to bit offset/bit_width
         field['bit_offset'], field['bit_width'] = \
-            SVD._resolve_bit_range(SVD._process_bit_range(node))
+            SVDReader._resolve_bit_range(SVDReader._process_bit_range(node))
         # derived field?
         if 'derivedFrom' in node.attrib:
             field['derived_from'] = node.attrib['derivedFrom']
@@ -462,7 +470,7 @@ class SVD:
         # level as the 'node'
         for n in node.iter('enumeratedValues') or []:
             # proces peripheral data
-            evs_name, evs_data = SVD._process_enumerated_values(n)
+            evs_name, evs_data = SVDReader._process_enumerated_values(n)
             # store within the device
             field['enumerated_values'][evs_name] = evs_data
         # return read value
@@ -473,18 +481,19 @@ class SVD:
     def _process_register(node: ET.Element):
         # all the conversions
         conversions = [
-            ('name', 'name', True, None, SVD._covnert_dimable_identifier_type),
+            ('name', 'name', True, None,
+             SVDReader._covnert_dimable_identifier_type),
             ('description', 'description', False, None, None),
             ('offset', 'addressOffset', False, None,
-             SVD._convert_scaled_non_negative_integer)
+             SVDReader._convert_scaled_non_negative_integer)
         ]
         # get basic information
-        register = SVD._get_vals(node, conversions)
+        register = SVDReader._get_vals(node, conversions)
         # registers property group may also be present
         register['reg_properties'] = \
-            SVD._process_register_properties_group(node)
+            SVDReader._process_register_properties_group(node)
         # dimensional element group might be present
-        register['dim'] = SVD._process_dim_element_group(node)
+        register['dim'] = SVDReader._process_dim_element_group(node)
         # derived register?
         if 'derivedFrom' in node.attrib:
             register['derived_from'] = node.attrib['derivedFrom']
@@ -497,7 +506,7 @@ class SVD:
         # 'fields' tag
         for n in node.find('fields') or []:
             # proces peripheral data
-            f_name, f_data = SVD._process_field(n)
+            f_name, f_data = SVDReader._process_field(n)
             # store within the device
             register['fields'][f_name] = f_data
         # return read value
@@ -510,17 +519,19 @@ class SVD:
     def _process_cluster(node: ET.Element):
         # all the conversions
         conversions = [
-            ('name', 'name', True, None, SVD._covnert_dimable_identifier_type),
+            ('name', 'name', True, None,
+             SVDReader._covnert_dimable_identifier_type),
             ('description', 'description', False, None, None),
             ('offset', 'addressOffset', True, None,
-             SVD._convert_scaled_non_negative_integer)
+             SVDReader._convert_scaled_non_negative_integer)
         ]
         # get basic information
-        cluster = SVD._get_vals(node, conversions)
+        cluster = SVDReader._get_vals(node, conversions)
         # registers property group may also be present
-        cluster['reg_properties'] = SVD._process_register_properties_group(node)
+        cluster['reg_properties'] = \
+            SVDReader._process_register_properties_group(node)
         # dimensional element group might be present
-        cluster['dim'] = SVD._process_dim_element_group(node)
+        cluster['dim'] = SVDReader._process_dim_element_group(node)
         # derived register?
         if 'derivedFrom' in node.attrib:
             cluster['derived_from'] = node.attrib['derivedFrom']
@@ -533,7 +544,7 @@ class SVD:
         # clusters may contain nested clusters. how neat.
         for n in node.findall('cluster') or []:
             # go down the cluster tree
-            c_name, c_data = SVD._process_cluster(n)
+            c_name, c_data = SVDReader._process_cluster(n)
             # store information
             cluster['clusters'][c_name] = c_data
 
@@ -542,7 +553,7 @@ class SVD:
         # process registers
         for n in node.findall('register') or []:
             # process peripheral data
-            r_name, r_data = SVD._process_register(n)
+            r_name, r_data = SVDReader._process_register(n)
             # store within the device
             cluster['registers'][r_name] = r_data
 
@@ -554,19 +565,20 @@ class SVD:
     def _process_peripheral(node: ET.Element):
         # all the conversions
         conversions = [
-            ('name', 'name', True, None, SVD._covnert_dimable_identifier_type),
+            ('name', 'name', True, None,
+             SVDReader._covnert_dimable_identifier_type),
             ('group_name', 'groupName', False, None, None),
             ('description', 'description', False, None, None),
             ('base_address', 'baseAddress', True, None,
-             SVD._convert_scaled_non_negative_integer)
+             SVDReader._convert_scaled_non_negative_integer)
         ]
         # get basic information
-        peripheral = SVD._get_vals(node, conversions)
+        peripheral = SVDReader._get_vals(node, conversions)
         # registers property group may also be present
         peripheral['reg_properties'] = \
-            SVD._process_register_properties_group(node)
+            SVDReader._process_register_properties_group(node)
         # dimensional element group might be present
-        peripheral['dim'] = SVD._process_dim_element_group(node)
+        peripheral['dim'] = SVDReader._process_dim_element_group(node)
         # derived peripheral?
         if 'derivedFrom' in node.attrib:
             peripheral['derived_from'] = node.attrib['derivedFrom']
@@ -577,14 +589,14 @@ class SVD:
         # process address block (it might be not present)
         if node.find('addressBlock'):
             peripheral['address_block'] = \
-                SVD._process_address_block(node.find('addressBlock'))
+                SVDReader._process_address_block(node.find('addressBlock'))
 
         # initialize with empty dictionary
         peripheral['interrupts'] = dict()
         # a peripheral may have multiple interrupts
         for n in node.findall('interrupt'):
             # parse interrupt record
-            i_name, i_data = SVD._process_interrupt(n)
+            i_name, i_data = SVDReader._process_interrupt(n)
             # store
             peripheral['interrupts'][i_name] = i_data
 
@@ -597,14 +609,14 @@ class SVD:
             # process clusters
             for n in node_registers.findall('cluster'):
                 # go down the cluster tree
-                c_name, c_data = SVD._process_cluster(n)
+                c_name, c_data = SVDReader._process_cluster(n)
                 # store information
                 peripheral['clusters'][c_name] = c_data
 
             # process clusters
             for n in node_registers.findall('register'):
                 # go down the cluster tree
-                c_name, c_data = SVD._process_register(n)
+                c_name, c_data = SVDReader._process_register(n)
                 # store information
                 peripheral['registers'][c_name] = c_data
 
@@ -620,16 +632,17 @@ class SVD:
             ('description', 'description', True, None, None),
             ('version', 'version', True, None, None),
             ('width', 'width', True, None,
-             SVD._convert_scaled_non_negative_integer),
+             SVDReader._convert_scaled_non_negative_integer),
             ('address_unit_bits', 'addressUnitBits', True, None,
-             SVD._convert_scaled_non_negative_integer)
+             SVDReader._convert_scaled_non_negative_integer)
         ]
         # convert all the device fields
-        device = SVD._get_vals(node, conversions)
+        device = SVDReader._get_vals(node, conversions)
         # store the information about the cpu
-        device['cpu'] = SVD._process_cpu(node.find('cpu'))
+        device['cpu'] = SVDReader._process_cpu(node.find('cpu'))
         # registers property group may also be present
-        device['reg_properties'] = SVD._process_register_properties_group(node)
+        device['reg_properties'] = \
+            SVDReader._process_register_properties_group(node)
         # build up the peripheral list
         device['peripherals'] = dict()
         # devices are always fully defined
@@ -637,7 +650,7 @@ class SVD:
         # process all peripherals
         for n in node.find('peripherals') or []:
             # process peripheral data
-            p_name, p_data = SVD._process_peripheral(n)
+            p_name, p_data = SVDReader._process_peripheral(n)
             # store within the device
             device['peripherals'][p_name] = p_data
         # return read value
@@ -660,7 +673,8 @@ class SVD:
             # both entries exist and both are dictionaries, need to go deeper
             elif isinstance(update_to[k], dict) and \
                     isinstance(update_from[k], dict):
-                SVD._update_elements(update_to[k], update_from[k], overwrite)
+                SVDReader._update_elements(update_to[k], update_from[k],
+                                           overwrite)
             # 'other types
             elif overwrite:
                 update_to[k] = copy.deepcopy(update_from[k])
@@ -696,7 +710,7 @@ class SVD:
                     break
                 # got a match! go to next level
                 else:
-                    lc = SVD._next_level(found_col)
+                    lc = SVDReader._next_level(found_col)
             # store result
             result = found_col
         # oops! nothing was found!
@@ -718,8 +732,9 @@ class SVD:
         # go in depth
         while elem.get('derived_from') and not elem.get('fully_defined'):
             # get the derived element
-            derived_from = SVD._follow_derivation_path(elem['derived_from'],
-                                                       level_collections)
+            derived_from = \
+                SVDReader._follow_derivation_path(elem['derived_from'],
+                                                  level_collections)
             # add to list
             derivation_list += [derived_from]
             # update the element
@@ -734,12 +749,12 @@ class SVD:
         # had their derivations resolved along the way
         output, output_list = dict(), []
         # do we have any exemptions for this level
-        level_exemptions = SVD._derivation_exemptions.get(level_name)
+        level_exemptions = SVDReader._derivation_exemptions.get(level_name)
         # process derivation list
         for level_collection in reversed(derivation_list):
             # udpate the current output with data from 'd'
-            SVD._update_elements(output, level_collection,
-                                 exemptions=level_exemptions)
+            SVDReader._update_elements(output, level_collection,
+                                       exemptions=level_exemptions)
             # store the state on the list
             output_list.append(copy.deepcopy(output))
         # return a list that represents all the steps of the derivation
@@ -755,17 +770,18 @@ class SVD:
             levels_collections = []
 
         # obtain a list of collections for the next level in hierarchy
-        next_level_collections = SVD._next_level(node)
+        next_level_collections = SVDReader._next_level(node)
         # element derives from something?
         if not node.get('fully_defined'):
             # build the list of all things that we derive from
-            dl = SVD._build_derivation_list(node, levels_collections)
+            dl = SVDReader._build_derivation_list(node, levels_collections)
             # produce merged outputs on all levels of derivation, zip these with
             # current values of elements  that were used for the whole
             # derivation process and finally update them with derived data.
             # 'update()' is safe here since '_apply_derivation_list()' produces
             # deep-copies of the data provided
-            for dst, src in zip(dl, SVD._apply_derivation_list(dl, level_name)):
+            al = SVDReader._apply_derivation_list(dl, level_name)
+            for dst, src in zip(dl, al):
                 dst.update(src)
 
             # enumerated value[s] do not need to have their name specified and
@@ -791,9 +807,9 @@ class SVD:
                 # we update level collections here so that a new list is created
                 # and we don't mess up the lists from  previous calls of this
                 # recursive function
-                SVD._resolve_derivations(elem, name, next_level_name,
-                                         levels_collections +
-                                         [next_level_collections])
+                SVDReader._resolve_derivations(elem, name, next_level_name,
+                                               levels_collections +
+                                               [next_level_collections])
 
     # process all the fields that have the following property: elements of lower
     # level group overwrite the elements from more general level. Currently this
@@ -806,11 +822,11 @@ class SVD:
             inheritance = {k: dict() for k in ['reg_properties']}
 
         # dive into the hierarchy levels
-        next_level_collections = SVD._next_level(node)
+        next_level_collections = SVDReader._next_level(node)
         # process every entry within the inheritance
         for k in inheritance:
             # update with what was inherited
-            SVD._update_elements(node[k], inheritance[k], overwrite=False)
+            SVDReader._update_elements(node[k], inheritance[k], overwrite=False)
             # this is now our new inheritance
             inheritance[k] = node.get(k)
 
@@ -820,7 +836,7 @@ class SVD:
             if next_level_name != 'fields':
                 # go in depth
                 for name, elem in next_level_collection.items():
-                    SVD._resolve_implicit_inheritance(elem, inheritance)
+                    SVDReader._resolve_implicit_inheritance(elem, inheritance)
 
     # create an iterable that represents all strings that shall be generated
     # based on provided 'dimElementGroup' data
@@ -867,7 +883,7 @@ class SVD:
             nodes += [new_node]
         # list?
         else:
-            for name, offset in SVD._create_list_namespace(node):
+            for name, offset in SVDReader._create_list_namespace(node):
                 # create new dictionary
                 new_node = dict(node)
                 # set name
@@ -885,9 +901,9 @@ class SVD:
     @staticmethod
     def _resolve_arrays_lists(node: dict, level_name='device', parent=None):
         # next hierarchy level name
-        next_level_collections = SVD._next_level(node)
+        next_level_collections = SVDReader._next_level(node)
         # create nodes based on array/list generation
-        new_nodes = SVD._create_arrays_lists(node, level_name)
+        new_nodes = SVDReader._create_arrays_lists(node, level_name)
         # got the substitution list?
         if new_nodes:
             # pop the old one
@@ -902,8 +918,8 @@ class SVD:
             if next_level_name != 'enumerated_values':
                 # go in depth
                 for name, elem in next_level_collection.items():
-                    SVD._resolve_arrays_lists(elem, next_level_name,
-                                              next_level_collection)
+                    SVDReader._resolve_arrays_lists(elem, next_level_name,
+                                                    next_level_collection)
 
     # process the device from the root of the svd document.If the processing
     # succeeds then a dictionary will be returned in which the structure of the
@@ -914,16 +930,16 @@ class SVD:
     @staticmethod
     def process(root: ET.Element):
         # build up the device dictionary as defined in the svd file
-        device = SVD._process_device(root)
+        device = SVDReader._process_device(root)
 
         # resolve all derivations so that we end up with fully expanded
         # list of peripherals/registers/etc...
-        SVD._resolve_derivations(device)
+        SVDReader._resolve_derivations(device)
         # resolve the inheritance within the device tree according
         # to svd rules
-        SVD._resolve_implicit_inheritance(device)
+        SVDReader._resolve_implicit_inheritance(device)
         # # create lists and arrays!
-        SVD._resolve_arrays_lists(device)
+        SVDReader._resolve_arrays_lists(device)
 
         # return the processed device
         return device

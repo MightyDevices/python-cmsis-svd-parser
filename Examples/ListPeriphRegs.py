@@ -8,7 +8,7 @@ site.addsitedir("..")
 # import the parser
 import xml.etree.ElementTree as ET
 # import the svd parser itself
-from SVD import SVD
+from SVDReader import SVDReader
 
 
 # display information about the registers fields and whatnot
@@ -42,7 +42,7 @@ def display_registers(collection: dict, level=0):
 # load the file using xml parser
 root = ET.parse('example.svd').getroot()
 # parse the device file
-device = SVD.process(root)
+device = SVDReader.process(root)
 
 # show the device name
 print(f"Device name: {device['name']}")
