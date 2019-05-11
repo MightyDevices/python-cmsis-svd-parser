@@ -145,7 +145,7 @@ class SVD:
         ls = re.match("([_0-9a-zA-Z]+)(?:,\s*([_0-9a-zA-Z]+))*", x)
         # list syntax worked out!
         if ls:
-            return [ls.group(i) for i in range(1, len(ls.groups()))]
+            return x.split(',')
 
         # none of above worked out!
         raise Exception(f"Unable to convert dimIndexType {x}")
@@ -249,7 +249,7 @@ class SVD:
         return value
 
     # return a dictionary of values that are read from the node and are
-    # convertedusing the conversion logic. convertsions is a list of tuples
+    # converted using the conversion logic. conversions is a list of tuples
     # in format: (dict_name, svd_name, required, default, converter)
     @staticmethod
     def _get_vals(node: ET.Element, conversions: list):
@@ -386,6 +386,7 @@ class SVD:
         # all the conversions
         conversions = [
             ('name', 'name', False, None, None),
+            ('description', 'description', False, None, None),
             ('header_name', 'headerEnumName', False, None,
              SVD._convert_identifier_type),
             ('value', 'value', False, None,
@@ -617,7 +618,11 @@ class SVD:
         conversions = [
             ('name', 'name', True, None, None),
             ('description', 'description', True, None, None),
-            ('version', 'version', True, None, None)
+            ('version', 'version', True, None, None),
+            ('width', 'width', True, None,
+             SVD._convert_scaled_non_negative_integer),
+            ('address_unit_bits', 'addressUnitBits', True, None,
+             SVD._convert_scaled_non_negative_integer)
         ]
         # convert all the device fields
         device = SVD._get_vals(node, conversions)
@@ -820,31 +825,19 @@ class SVD:
     # create an iterable that represents all strings that shall be generated
     # based on provided 'dimElementGroup' data
     @staticmethod
-    def _create_arrays_lists_namespace(node: dict):
+    def _create_list_namespace(node: dict):
         # extract information
         name, dim = node.get('name'), node.get('dim')
-        # two modes of operation
-        is_array = "[%s]" in name
-        is_list = not is_array and "%s" in name
-        # array generates a single entry in form name[length] and with offset 0
-        if is_array:
-            # this is the trick to serving an array
-            namespace = [(re.sub("%s", f"{dim.get('dim')}", name), 0)]
-        # list situation
-        elif is_list:
-            # construct a range using provided list of indices or range
-            # determined by dim
-            rng = dim.get('index', [str(i) for i in range(dim.get('dim', 0))])
-            inc = dim.get('increment')
-            # invalid parameteres?
-            if not rng or not inc:
-                raise Exception(f"List requires either dim or dim_index")
-            # build up the list
-            namespace = [(re.sub("%s", rng[i], name), inc * i)
-                         for i in range(len(rng))]
-        # sanity check
-        else:
-            raise Exception("No placeholder '%s' within name string")
+        # construct a range using provided list of indices or range
+        # determined by dim
+        rng = dim.get('index', [str(i) for i in range(dim.get('dim', 0))])
+        inc = dim.get('increment')
+        # invalid parameteres?
+        if not rng or not inc:
+            raise Exception(f"List requires either dim or dim_index")
+        # build up the list
+        namespace = [(re.sub("%s", rng[i], name), inc * i)
+                     for i in range(len(rng))]
         # return the resulting namespace
         return namespace
 
@@ -863,18 +856,28 @@ class SVD:
         }
         # list of produced nodes
         nodes = []
-        # process every name
-        for name, offset in SVD._create_arrays_lists_namespace(node):
-            # create new dictionary
+        # array? store the is_array flag
+        if "[%s]" in node.get('name'):
+            # new node is the exact copy of the old one
             new_node = dict(node)
-            # set name
-            new_node['name'] = name
-            # reset dim structure as we are done with dimming
-            new_node['dim'] = dict()
-            # use the dim increment generated offset to update node offset
-            new_node[lut[level]] = new_node.get(lut[level], 0) + offset
-            # return generator
+            # new flag get created to show that we are dealing with the array
+            # situation
+            new_node['is_array'] = True
+            # get the new node
             nodes += [new_node]
+        # list?
+        else:
+            for name, offset in SVD._create_list_namespace(node):
+                # create new dictionary
+                new_node = dict(node)
+                # set name
+                new_node['name'] = name
+                # reset dim structure as we are done with dimming
+                new_node['dim'] = dict()
+                # use the dim increment generated offset to update node offset
+                new_node[lut[level]] = new_node.get(lut[level], 0) + offset
+                # return generator
+                nodes += [new_node]
         # return all the nodes that were created
         return nodes
 
