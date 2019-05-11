@@ -1,7 +1,7 @@
 # python-cmsis-svd-parser
-Class for processing SVD documents and transforming those into a dictionary 
-Supports 1.3 version of the CMSIS-SVD schema. Helps A LOT if you are trying to 
-generate the header files for your MCU projects!
+Class for processing SVD documents and transforming those into a dictionary and 
+back again! Supports 1.3 version of the CMSIS-SVD schema. Helps A LOT if you are 
+trying to generate the header files for your MCU projects!
 
 ## What is returned
 Dictionary returned after parsing is a nested one (obviously). Levels of 
@@ -19,18 +19,35 @@ given field
 
 ## Usage
 ``` python
-# import the xml parsing tools
+# import the xml parser
 import xml.etree.ElementTree as ET
-# import the svd parser itself
-from SVD.SVD import SVD
+# import the svd reader/writer
+from SVDWriter import SVDWriter
+from SVDReader import SVDReader
 
 # load the file using xml parser
 root = ET.parse('example.svd').getroot()
 # parse the device file
 device = SVD.process(root)
+
+# load the file using xml parser
+root = ET.parse('example.svd').getroot()
+# parse the device file
+device = SVDReader.process(root)
+
+#
+# DO YOUR STUFF HERE
+#
+
+# process back to the xml tree
+xml = SVDWriter.process(device, make_pretty=True)
+# convert to string and save to file
+open("test.svd", "wb").write(ET.tostring(xml))
+
 ```
 
 ## Example
 Please see the Examples directory for a quick demonstration. Run the example by 
-typing: `python ListPeriphRegs.py` in the Examples directory
+typing: `python ListPeriphRegs.py` or `python ReadWriteSVD.py` in the Examples 
+directory
 
