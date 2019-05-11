@@ -175,6 +175,7 @@ class SVDWriter:
         SVDWriter._build_tree(xml_register, register, {
             'name': None,
             'description': None,
+            'alternate_to': 'alternateRegister',
             'offset': ('addressOffset', SVDWriter._convert_hex)
         })
         # populate registers properties information
@@ -199,6 +200,7 @@ class SVDWriter:
         SVDWriter._build_tree(xml_cluster, cluster, {
             'name': None,
             'description': None,
+            'alternate_to': 'alternateCluster',
             'offset': ('addressOffset', SVDWriter._convert_hex),
         })
         # populate registers properties information
@@ -250,6 +252,7 @@ class SVDWriter:
         SVDWriter._build_tree(xml_peripheral, peripheral, {
             'name': None,
             'description': None,
+            'alternate_to': 'alternatePeripheral',
             'group_name': 'groupName',
             'base_address': ('baseAddress', SVDWriter._convert_hex)
         })
