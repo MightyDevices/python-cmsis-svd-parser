@@ -485,7 +485,9 @@ class SVDReader:
              SVDReader._covnert_dimable_identifier_type),
             ('description', 'description', False, None, None),
             ('offset', 'addressOffset', False, None,
-             SVDReader._convert_scaled_non_negative_integer)
+             SVDReader._convert_scaled_non_negative_integer),
+            ('alternate_to', 'alternateRegister', False, None,
+             SVDReader._convert_identifier_type)
         ]
         # get basic information
         register = SVDReader._get_vals(node, conversions)
@@ -523,7 +525,9 @@ class SVDReader:
              SVDReader._covnert_dimable_identifier_type),
             ('description', 'description', False, None, None),
             ('offset', 'addressOffset', True, None,
-             SVDReader._convert_scaled_non_negative_integer)
+             SVDReader._convert_scaled_non_negative_integer),
+            ('alternate_to', 'alternateCluster', False, None,
+             SVDReader._convert_identifier_type)
         ]
         # get basic information
         cluster = SVDReader._get_vals(node, conversions)
@@ -570,7 +574,9 @@ class SVDReader:
             ('group_name', 'groupName', False, None, None),
             ('description', 'description', False, None, None),
             ('base_address', 'baseAddress', True, None,
-             SVDReader._convert_scaled_non_negative_integer)
+             SVDReader._convert_scaled_non_negative_integer),
+            ('alternate_to', 'alternatePeripheral', False, None,
+             SVDReader._convert_identifier_type)
         ]
         # get basic information
         peripheral = SVDReader._get_vals(node, conversions)
