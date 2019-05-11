@@ -28,11 +28,6 @@ from SVDReader import SVDReader
 # load the file using xml parser
 root = ET.parse('example.svd').getroot()
 # parse the device file
-device = SVD.process(root)
-
-# load the file using xml parser
-root = ET.parse('example.svd').getroot()
-# parse the device file
 device = SVDReader.process(root)
 
 #
