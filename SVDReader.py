@@ -527,7 +527,9 @@ class SVDReader:
             ('offset', 'addressOffset', True, None,
              SVDReader._convert_scaled_non_negative_integer),
             ('alternate_to', 'alternateCluster', False, None,
-             SVDReader._convert_identifier_type)
+             SVDReader._convert_identifier_type),
+            ('header_struct_name', 'HeaderStructName', False, None,
+             SVDReader._convert_dim_index_type),
         ]
         # get basic information
         cluster = SVDReader._get_vals(node, conversions)
@@ -576,7 +578,9 @@ class SVDReader:
             ('base_address', 'baseAddress', True, None,
              SVDReader._convert_scaled_non_negative_integer),
             ('alternate_to', 'alternatePeripheral', False, None,
-             SVDReader._convert_identifier_type)
+             SVDReader._convert_identifier_type),
+            ('header_struct_name', 'HeaderStructName', False, None,
+             SVDReader._convert_dim_index_type),
         ]
         # get basic information
         peripheral = SVDReader._get_vals(node, conversions)

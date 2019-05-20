@@ -14,7 +14,9 @@ from SVDReader import SVDReader
 # load the file using xml parser
 root = ET.parse('example.svd').getroot()
 # parse the device file
-device = SVDReader.process(root)
+device = SVDReader.process(root, resolve_derivations=False,
+                           resolve_inheritance=False,
+                           resolve_arrays_lists=False)
 # process back to the xml tree
 xml = SVDWriter.process(device, make_pretty=True)
 

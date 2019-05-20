@@ -127,7 +127,8 @@ class SVDWriter:
         # create a root
         xml_enumerated_values = ET.Element('enumeratedValues')
         # got the derivation set-up?
-        if not enumerated_values.get('fully_defined'):
+        if not enumerated_values.get('fully_defined') and \
+                enumerated_values.get('derived_from'):
             xml_enumerated_values.set('derivedFrom',
                                       enumerated_values['derived_from'])
         # build up the basic information
@@ -147,7 +148,7 @@ class SVDWriter:
         # root element for the register
         xml_field = ET.Element('field')
         # got the derivation set-up?
-        if not field.get('fully_defined'):
+        if not field.get('fully_defined') and field.get('derived_from'):
             xml_field.set('derivedFrom', field['derived_from'])
         # prepare basic information
         SVDWriter._build_tree(xml_field, field, {
@@ -180,7 +181,7 @@ class SVDWriter:
         # root element for the register
         xml_register = ET.Element('register')
         # got the derivation set-up?
-        if not register.get('fully_defined'):
+        if not register.get('fully_defined') and register.get('derived_from'):
             xml_register.set('derivedFrom', register['derived_from'])
         # populate dim information
         if register.get('dim'):
@@ -208,7 +209,7 @@ class SVDWriter:
         # prepare root for the cluster
         xml_cluster = ET.Element('cluster')
         # got the derivation set-up?
-        if not cluster.get('fully_defined'):
+        if not cluster.get('fully_defined') and cluster.get('derived_from'):
             xml_cluster.set('derivedFrom', cluster['derived_from'])
         # populate dim information
         if cluster.get('dim'):
@@ -218,10 +219,11 @@ class SVDWriter:
             'name': None,
             'description': None,
             'alternate_to': 'alternateCluster',
+            'header_struct_name': 'headerStructName',
             'offset': ('addressOffset', SVDWriter._convert_hex),
         })
         # populate registers properties information
-        if cluster['reg_properties']:
+        if cluster.get('reg_properties'):
             SVDWriter._append_register_properties_group(
                 xml_cluster, cluster['reg_properties'])
         # support for nested clusters
@@ -266,7 +268,8 @@ class SVDWriter:
         # root peripheral element
         xml_peripheral = ET.Element('peripheral')
         # got the derivation set-up?
-        if not peripheral.get('fully_defined'):
+        if not peripheral.get('fully_defined') and \
+                peripheral.get('derived_from'):
             xml_peripheral.set('derivedFrom', peripheral['derived_from'])
         # populate dim information
         if peripheral.get('dim'):
@@ -278,6 +281,7 @@ class SVDWriter:
             'description': None,
             'alternate_to': 'alternatePeripheral',
             'group_name': 'groupName',
+            'header_struct_name': 'headerStructName',
             'base_address': ('baseAddress', SVDWriter._convert_hex)
         })
         # populate registers properties information
