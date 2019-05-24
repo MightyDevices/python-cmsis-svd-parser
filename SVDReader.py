@@ -528,8 +528,8 @@ class SVDReader:
              SVDReader._convert_scaled_non_negative_integer),
             ('alternate_to', 'alternateCluster', False, None,
              SVDReader._convert_identifier_type),
-            ('header_struct_name', 'HeaderStructName', False, None,
-             SVDReader._convert_dim_index_type),
+            ('header_struct_name', 'headerStructName', False, None,
+             SVDReader._convert_identifier_type),
         ]
         # get basic information
         cluster = SVDReader._get_vals(node, conversions)
@@ -579,8 +579,8 @@ class SVDReader:
              SVDReader._convert_scaled_non_negative_integer),
             ('alternate_to', 'alternatePeripheral', False, None,
              SVDReader._convert_identifier_type),
-            ('header_struct_name', 'HeaderStructName', False, None,
-             SVDReader._convert_dim_index_type),
+            ('header_struct_name', 'headerStructName', False, None,
+             SVDReader._convert_identifier_type),
         ]
         # get basic information
         peripheral = SVDReader._get_vals(node, conversions)
@@ -772,6 +772,7 @@ class SVDReader:
 
     # generate element instances based on the 'derivedFrom' property
     @staticmethod
+    # TODO make functional
     def _resolve_derivations(node: dict, name=None, level_name='device',
                              levels_collections=None):
         # initialize list that represent the levels that we reach as we go
@@ -826,6 +827,7 @@ class SVDReader:
     # deals with 'registerPropertiesGroup' but you can add more in the
     # 'initial conditions'
     @staticmethod
+    # TODO make functional
     def _resolve_implicit_inheritance(node: dict, inheritance=None):
         # initial conditions
         if inheritance is None:
@@ -870,9 +872,6 @@ class SVDReader:
     # create instances based on the dim information provided
     @staticmethod
     def _create_arrays_lists(node: dict, level: str):
-        # nothing to work on
-        if "%s" not in node.get('name'):
-            return None
         # level-offset field name lookup table
         lut = {
             'peripherals': 'base_address',
@@ -880,56 +879,57 @@ class SVDReader:
             'clusters': 'offset',
             'fields': 'bit_offset'
         }
-        # list of produced nodes
-        nodes = []
         # array? store the is_array flag
-        if "[%s]" in node.get('name'):
+        if "[%s]" in node['name']:
             # new node is the exact copy of the old one
             new_node = dict(node)
-            # new flag get created to show that we are dealing with the array
-            # situation
+            # set the array flag
             new_node['is_array'] = True
-            # get the new node
-            nodes += [new_node]
+            # return the nodes collection
+            output = {node['name']: new_node}
         # list?
-        else:
+        elif "%s" in node['name']:
+            # start with empty dictionary
+            output = dict()
+            # build up the namespace for the list
             for name, offset in SVDReader._create_list_namespace(node):
                 # create new dictionary
                 new_node = dict(node)
-                # set name
+                # set name and dimming
                 new_node['name'] = name
-                # reset dim structure as we are done with dimming
                 new_node['dim'] = dict()
                 # use the dim increment generated offset to update node offset
                 new_node[lut[level]] = new_node.get(lut[level], 0) + offset
                 # return generator
-                nodes += [new_node]
+                output[name] = new_node
+        # none of above?
+        else:
+            output = {node['name']: node}
         # return all the nodes that were created
-        return nodes
+        return output
 
     # resolve dimensional information to produce arrays and lists
     @staticmethod
-    def _resolve_arrays_lists(node: dict, level_name='device', parent=None):
-        # next hierarchy level name
-        next_level_collections = SVDReader._next_level(node)
-        # create nodes based on array/list generation
+    def _resolve_arrays_lists(node: dict, level_name='device'):
+        # create node collection based on array/list generation
         new_nodes = SVDReader._create_arrays_lists(node, level_name)
-        # got the substitution list?
-        if new_nodes:
-            # pop the old one
-            parent.pop(node['name'])
-            # append the new ones
-            for nn in new_nodes:
-                parent[nn['name']] = nn
-
-        # process all collections
-        for next_level_name, next_level_collection in next_level_collections:
-            # this process goes as far as fields
-            if next_level_name != 'enumerated_values':
-                # go in depth
-                for name, elem in next_level_collection.items():
-                    SVDReader._resolve_arrays_lists(elem, next_level_name,
-                                                    next_level_collection)
+        # process every produced output
+        for new_node_name, new_node in new_nodes.items():
+            # next hierarchy level name
+            next_lvl_collections = SVDReader._next_level(new_node)
+            # process all underlying collections
+            for next_lvl_name, next_lvl_collection in next_lvl_collections:
+                # this process goes as far as fields
+                if next_lvl_name != 'enumerated_values':
+                    # go in depth
+                    for name, elem in next_lvl_collection.items():
+                        # generate new nodes for the underlying level
+                        next_lvl_new_nodes = \
+                            SVDReader._resolve_arrays_lists(elem, next_lvl_name)
+                        # apply to what's already been generated
+                        new_node[next_lvl_name].update(next_lvl_new_nodes)
+        # return all the gathered information
+        return new_nodes if level_name != 'device' else new_nodes.popitem()[1]
 
     # process the device from the root of the svd document.If the processing
     # succeeds then a dictionary will be returned in which the structure of the
@@ -953,7 +953,7 @@ class SVDReader:
             SVDReader._resolve_implicit_inheritance(device)
         # # create lists and arrays!
         if resolve_arrays_lists:
-            SVDReader._resolve_arrays_lists(device)
+            device = SVDReader._resolve_arrays_lists(device)
 
         # return the processed device
         return device
